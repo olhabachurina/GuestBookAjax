@@ -1,0 +1,91 @@
+﻿@model GuestBookAjax.Models.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h2>Регистрация</h2>
+
+<form asp-action="Register" method="post" onsubmit="return validateForm()">
+    <div class="form-group">
+        <label for="name">Логин:</label>
+        <input type="text" class="form-control" id="username" name="Name" asp-for="Name" onblur="checkUsername()" required />
+        <span class="tooltip-text">Логин должен содержать 5-15 символов и быть алфавитно-цифровым.</span>
+        <p id="username-suggestion" class="suggestion"></p>
+        <p id="username-error" class="error-message"></p>
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label for="password">Пароль:</label>
+        <input type="password" class="form-control" id="password" name="Password" asp-for="Password" required />
+        <span class="tooltip-text">Пароль должен содержать 8-20 символов, включая как минимум одну цифру, одну строчную букву и одну заглавную букву.</span>
+        <p id="password-error" class="error-message"></p>
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label for="confirmPassword">Подтверждение пароля:</label>
+        <input type="password" class="form-control" id="confirmPassword" name="ConfirmPassword" asp-for="ConfirmPassword" required />
+        <span class="tooltip-text">Пожалуйста, подтвердите ваш пароль.</span>
+        <p id="confirmPassword-error" class="error-message"></p>
+        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Регистрация</button>
+    <p class="error-message">@ViewBag.Error</p>
+</form>
+
+<script>
+    function checkUsername() {
+        var username = document.getElementById("username").value;
+        if (username.length > 0) {
+            $.ajax({
+                url: '/api/Account/CheckUsername',
+                type: 'GET',
+                data: { username: username },
+                success: function (response) {
+                    if (!response.available) {
+                        document.getElementById("username-suggestion").innerText =
+                            "Логин уже занят. Предлагаем: " + response.suggestedUsername;
+                    } else {
+                        document.getElementById("username-suggestion").innerText = "";
+                    }
+                }
+            });
+        }
+    }
+
+    function validateForm() {
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+        var confirmPassword = document.getElementById("confirmPassword").value;
+        var usernameError = document.getElementById("username-error");
+        var passwordError = document.getElementById("password-error");
+        var confirmPasswordError = document.getElementById("confirmPassword-error");
+        var usernameRegex = /^[a-zA-Z0-9]{5,15}$/;
+        var passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,20}$/;
+
+        var isValid = true;
+
+        if (!usernameRegex.test(username)) {
+            usernameError.innerText = "Логин должен содержать 5-15 символов и быть алфавитно-цифровым.";
+            isValid = false;
+        } else {
+            usernameError.innerText = "";
+        }
+
+        if (!passwordRegex.test(password)) {
+            passwordError.innerText = "Пароль должен содержать 8-20 символов, включая как минимум одну цифру, одну строчную букву и одну заглавную букву.";
+            isValid = false;
+        } else {
+            passwordError.innerText = "";
+        }
+
+        if (password !== confirmPassword) {
+            confirmPasswordError.innerText = "Пароли не совпадают.";
+            isValid = false;
+        } else {
+            confirmPasswordError.innerText = "";
+        }
+
+        return isValid;
+    }
+</script>
